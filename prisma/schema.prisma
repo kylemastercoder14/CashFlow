@@ -1,6 +1,7 @@
 generator client {
   provider = "prisma-client"
-  output   = "../node_modules/.prisma/client"
+  // Generate the client into the source tree so we can import it directly
+  output   = "../src/app/generated/prisma"
 }
 
 datasource db {
