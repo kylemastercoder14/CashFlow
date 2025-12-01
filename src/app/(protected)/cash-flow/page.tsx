@@ -47,7 +47,7 @@ export default function CashFlowPage() {
       const revenues = await revenueRes.json();
 
       // Group by month
-      const monthlyData: Record<string, { income: number; expenses: number }> = {};
+      const monthlyData: Record<string, { income: number; expenses: number; label: string }> = {};
 
       // Process revenues (income)
       revenues.forEach((revenue: any) => {
