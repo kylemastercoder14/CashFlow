@@ -25,7 +25,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     >
       <AppSidebar variant="sidebar" />
       <SidebarInset>
-        <SiteHeader name={session?.user.name} />
+        <SiteHeader name={session?.user.name || "User"} />
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
