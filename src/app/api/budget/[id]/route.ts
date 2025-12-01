@@ -4,7 +4,7 @@ import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -12,9 +12,10 @@ export async function GET(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const budget = await prisma.budget.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -32,7 +33,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -40,12 +41,13 @@ export async function PATCH(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { name, category, allocated, spent, period } = body;
 
     const budget = await prisma.budget.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -66,7 +68,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.budget.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }),
         ...(category && { category }),
@@ -86,7 +88,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -94,9 +96,10 @@ export async function DELETE(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const budget = await prisma.budget.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -106,7 +109,7 @@ export async function DELETE(
     }
 
     await prisma.budget.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return createSuccessResponse({ message: "Budget deleted successfully" });

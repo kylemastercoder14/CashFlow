@@ -4,7 +4,7 @@ import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -12,9 +12,10 @@ export async function GET(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
       include: {
@@ -35,7 +36,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -43,12 +44,13 @@ export async function PATCH(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { customer, date, dueDate, status, items, notes, tax } = body;
 
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -76,12 +78,12 @@ export async function PATCH(
 
       // Delete existing items and create new ones
       await prisma.invoiceItem.deleteMany({
-        where: { invoiceId: params.id },
+        where: { invoiceId: id },
       });
     }
 
     const updated = await prisma.invoice.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...updateData,
         ...(items && items.length > 0 && {
@@ -108,7 +110,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -116,9 +118,10 @@ export async function DELETE(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -128,7 +131,7 @@ export async function DELETE(
     }
 
     await prisma.invoice.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return createSuccessResponse({ message: "Invoice deleted successfully" });

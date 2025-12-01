@@ -4,7 +4,7 @@ import { getAuthenticatedUser, createErrorResponse, createSuccessResponse } from
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -12,9 +12,10 @@ export async function GET(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const savings = await prisma.savings.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -32,7 +33,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -40,12 +41,13 @@ export async function PATCH(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { description, type, amount, date, category, notes } = body;
 
     const savings = await prisma.savings.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -59,7 +61,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.savings.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(description && { description }),
         ...(type && { type }),
@@ -79,7 +81,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -87,9 +89,10 @@ export async function DELETE(
       return createErrorResponse("Unauthorized", 401);
     }
 
+    const { id } = await params;
     const savings = await prisma.savings.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -99,7 +102,7 @@ export async function DELETE(
     }
 
     await prisma.savings.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return createSuccessResponse({ message: "Savings record deleted successfully" });

@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -13,7 +13,7 @@ export async function DELETE(
       return createErrorResponse("Unauthorized", 401);
     }
 
-    const sessionId = params.id;
+    const { id: sessionId } = await params;
 
     // Get current session to prevent deleting it
     const currentSession = await auth.api.getSession({
