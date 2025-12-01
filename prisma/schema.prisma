@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  emailVerified Boolean  @default(false)
+  image         String?
+  isArchived    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  categories    Category[]
+  expenses      Expense[]
+  revenues      Revenue[]
+  invoices      Invoice[]
+  transactions  Transaction[]
+  budgets       Budget[]
+  savings       Savings[]
+  notifications Notification[]
+  paymentMethods PaymentMethod[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // "Income" or "Expense"
+  description String?
+  color       String   @default("#3b82f6")
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  expenses    Expense[]
+  revenues    Revenue[]
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Expense {
+  id            String    @id @default(uuid())
+  description   String
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  amount        Float
+  date          DateTime
+  paymentMethod String    // "Credit Card", "Bank Transfer", "Cash", "Check", "PayPal"
+  status        String    @default("Pending") // "Pending", "Paid", "Cancelled"
+  vendor        String?
+  notes         String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([date])
+}
+
+model Revenue {
+  id            String    @id @default(uuid())
+  description   String
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  amount        Float
+  date          DateTime
+  paymentMethod String
+  status        String    @default("Pending") // "Pending", "Received", "Cancelled"
+  customer      String?
+  notes         String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([date])
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  customer      String
+  date          DateTime
+  dueDate       DateTime
+  status        String        @default("Draft") // "Draft", "Pending", "Paid", "Overdue"
+  subtotal      Float
+  tax           Float         @default(0)
+  total         Float
+  notes         String?
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@index([date])
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([invoiceId])
+}
+
+model Transaction {
+  id            String    @id @default(uuid())
+  transactionId String    @unique
+  date          DateTime
+  recipientName String
+  recipientEmail String
+  type          String    // "Yearly Bonus", "Employee Salary", "Factory Expense", etc.
+  amount        Float
+  currency      String    @default("PHP")
+  paymentMethod String    // "Mastercard", "Visa", "Bank Transfer", etc.
+  cardLastFour  String?
+  status        String    @default("Pending") // "Completed", "Pending", "Cancelled"
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([transactionId])
+  @@index([date])
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  allocated   Float
+  spent       Float    @default(0)
+  period      String   // "2024 Q1", "2024-01", etc.
+  status      String   @default("On Track") // "On Track", "Warning", "Over Budget"
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([period])
+}
+
+model Savings {
+  id          String   @id @default(uuid())
+  description String
+  type        String   // "Deposit" or "Withdrawal"
+  amount      Float
+  date        DateTime
+  category    String?  // Optional: "Emergency Fund", "Vacation", "Investment", etc.
+  notes       String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([date])
+  @@index([type])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  type        String   // "Invoice Due", "Budget Warning", "Payment Reminder", "Recurring Expense", "Custom"
+  isRead      Boolean  @default(false)
+  reminderDate DateTime? // When to show the reminder
+  relatedId   String?  // Optional: ID of related invoice, expense, etc.
+  relatedType String?  // Optional: "Invoice", "Expense", "Budget", etc.
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([reminderDate])
+}
+
+model PaymentMethod {
+  id            String   @id @default(uuid())
+  type          String   // "Credit Card", "GCash", "PayPal", "Bank Account", "Maya", "GrabPay", etc.
+  accountNumber String
+  accountName   String
+  cvc           String?  // Optional: Only for credit cards
+  expiryDate    DateTime? // Optional: Only for credit cards
+  isDefault     Boolean  @default(false)
+  notes         String?
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isDefault])
+}
