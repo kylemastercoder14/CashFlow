@@ -30,8 +30,9 @@ export async function POST(request: NextRequest) {
         headers: request.headers,
       });
 
-      if (result?.error) {
-        return createErrorResponse(result.error.message || "Failed to change password", 400);
+      // If result is null or doesn't have a user, it means the password change failed
+      if (!result || !result.user) {
+        return createErrorResponse("Failed to change password. Please check your current password.", 400);
       }
 
       return createSuccessResponse({ message: "Password changed successfully" });
