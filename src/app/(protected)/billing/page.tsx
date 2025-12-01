@@ -126,7 +126,7 @@ export default function BillingPage() {
       header: "Default",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          {row.getValue("isDefault") && (
+          {row.getValue("isDefault") as boolean && (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Default
