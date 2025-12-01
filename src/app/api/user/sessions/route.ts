@@ -29,7 +29,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Mark current session
-    const sessionsWithCurrent = sessions.map((sessionData) => ({
+    const sessionsWithCurrent = sessions.map((sessionData: {
+      id: string;
+      expiresAt: Date;
+      createdAt: Date;
+      ipAddress: string | null;
+      userAgent: string | null;
+      token: string;
+    }) => ({
       ...sessionData,
       isCurrent: sessionData.token === session?.session?.token,
     }));
